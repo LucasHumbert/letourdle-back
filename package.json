@@ -1,0 +1,24 @@
+{
+  "name": "letourdle-back",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LucasHumbert/letourdle-back.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LucasHumbert/letourdle-back/issues"
+  },
+  "homepage": "https://github.com/LucasHumbert/letourdle-back#readme",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.0"
+  }
+}
