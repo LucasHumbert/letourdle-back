@@ -1,27 +1,57 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+const express = require('express')
+const { getRidersCount, getAllRidersNames, getAllDatas} = require("./utils/requests");
+const {encode, decode} = require("./utils/hideNumber");
+const {findRiderInDatas, ridersComparison} = require("./utils/guessUtils");
 require('dotenv').config();
 
-const url = `${process.env.DATA_URL}/2025/stage-16`;
+const app = express()
+const port = 3000
 
-axios.get(url).then((response) => {
-    const $ = cheerio.load(response.data);
-    const rows = [];
+app.get('/start', async (req, res) => {
+    const riderCount = await getRidersCount(req.query.year, req.query.stage)
+    const riderToSearch = encode(Math.floor(Math.random() * riderCount) + 1)
 
-    $('div#resultsCont div.resTab:eq(1) table.results tbody tr').each((i, row) => {
-        let timeDiff = '+' + (i === 0 ? '00:00' : $(row).find('td').eq(11).find('font').text().trim())
+    res.json({ success: true, rider_to_search: riderToSearch })
+})
 
-        let col = {
-            rank: $(row).find('td').eq(0).text().trim(),
-            age: $(row).find('td').eq(6).text().trim(),
-            name: $(row).find('td').eq(7).find('a').text().trim(),
-            flag: $(row).find('td').eq(7).find('span').attr('class').split(' ')[1],
-            team: $(row).find('td').eq(8).text().trim(),
-            time_diff: timeDiff
-        }
+app.get('/guess', async (req, res) => {
+    let datas = await getAllDatas(req.query.year, req.query.stage)
+    let riderToFind = decode(req.query.data)
+    let riderGuessed = parseInt(req.query.guess)
+    let isCorrect;
+    let comparisons = {}
 
-        rows.push(col);
-    });
+    if (riderGuessed === riderToFind) {
+        riderGuessed = findRiderInDatas(datas, riderGuessed)
+        isCorrect = true
+    } else {
+        riderGuessed = findRiderInDatas(datas, riderGuessed)
+        riderToFind = findRiderInDatas(datas, riderToFind)
 
-    console.log(rows[0], rows[5]);
-}).catch(console.error);
+        comparisons = ridersComparison(riderGuessed, riderToFind)
+
+        isCorrect = false
+    }
+
+    res.json({
+        success: true,
+        is_correct: isCorrect,
+        rider: riderGuessed,
+        comparisons: comparisons,
+    })
+})
+
+app.get('/autocomplete', async (req, res) => {
+    let riders = await getAllRidersNames(req.query.year, req.query.stage)
+    let results = riders.filter((rider) =>
+        rider.name
+            .toLowerCase()
+            .includes(req.query.search.trim())
+    )
+
+    res.json({ success: true, results: results })
+})
+
+app.listen(port, () => {
+    console.log(`App listening on port ${port}`)
+})
